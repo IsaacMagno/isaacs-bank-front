@@ -1,0 +1,69 @@
+* {
+  -ms-overflow-style: none;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: #001524;
+}
+
+.text-cadet {
+  color: #617073;
+}
+
+.text-softblue {
+  color: #72b4f2;
+}
+
+.text-softgray {
+  color: #7a93ac;
+  /* color: ; */
+}
+
+.text-gainsboro {
+  color: gainsboro;
+}
+
+:root {
+  --bs-blue-purple-rgb: 146, 188, 234;
+}
+
+.bg-shadowblue {
+  --bs-bg-opacity: 1;
+  background-color: rgba(
+    var(--bs-blue-purple-rgb),
+    var(--bs-bg-opacity)
+  ) !important;
+}
+
+/* .sideBarButtons {
+  padding: 1em 2.5em 1em 2.5em;
+} */
+
+/* body,
+html {
+  height: 100vh;
+} */
+/*
+img,
+svg {
+  vertical-align: middle;
+}
+
+span {
+  cursor: pointer;
+}
+
+.fill {
+  height: 100vh;
+  min-height: 100vh;
+}
+
+.scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+*/
