@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { valuesManager, deleteExpense } from "../../services/axiosRequests";
-import { expensesManager } from "../../functions/expensesManager";
-import { setExpenseLogs } from "../../Redux/reducers/moneyManager";
+import { setAccount } from "../../Redux/reducers/moneyManager";
+import { createExpense, accountData } from "../../services/axiosRequests";
 
 import Form from "react-bootstrap/Form";
 import Dropdown from "react-bootstrap/Dropdown";
@@ -22,27 +21,34 @@ const FutureExpenses = () => {
   const [expenseCategory, setExpenseCategory] = useState("");
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseValue, setExpenseValue] = useState("");
+  const [expenseName, setExpenseName] = useState("");
 
-  const { expenseLogs } = useSelector((state) => state.moneyManager);
+  const {
+    account: { expenses },
+  } = useSelector((state) => state.moneyManager);
   const dispatch = useDispatch();
 
-  const handleRowSelected = useCallback(async (state) => {
-    if (state.selectedRows.length) {
-      const { id } = state.selectedRows[0];
-      const formatedID = id.replace(/\D/g, "");
+  // const handleRowSelected = useCallback(async (state) => {
+  //   if (state.selectedRows.length) {
+  //     const { id } = state.selectedRows[0];
+  //     const formatedID = id.replace(/\D/g, "");
 
-      await deleteExpense(formatedID);
-      await expensesManager().then((response) =>
-        dispatch(setExpenseLogs(response))
-      );
-    }
-  }, []);
+  //     await deleteExpense(formatedID);
+  //     await expensesManager().then((response) =>
+  //       dispatch(setExpenseLogs(response))
+  //     );
+  //   }
+  // }, []);
 
   useEffect(() => {
     setColumns([
       {
         name: "Categoria",
         selector: (row) => row.category,
+      },
+      {
+        name: "Nome",
+        selector: (row) => row.name,
       },
       {
         name: "Descrição",
@@ -55,35 +61,33 @@ const FutureExpenses = () => {
       },
     ]);
 
-    if (expenseLogs) {
+    if (expenses) {
       setData(
-        expenseLogs.map((log) => ({
-          id: log.description + "_" + log.id,
-          category: log.category,
-          description: log.description,
-          value: log.value,
+        expenses.map((log) => ({
+          id: log.descricao + "_" + log.id,
+          name: log.nome,
+          category: log.categoria,
+          description: log.descricao,
+          value: log.valor,
         }))
       );
     }
-  }, [expenseLogs]);
+  }, [expenses]);
 
   const handleSubmit = async () => {
-    await valuesManager(
-      {
-        category: expenseCategory,
-        description: expenseDesc,
-        value: expenseValue,
-      },
-      "expenses"
-    );
+    await createExpense({
+      categoria: expenseCategory,
+      nome: expenseName,
+      descricao: expenseDesc,
+      valor: expenseValue,
+    });
 
-    await expensesManager().then((response) =>
-      dispatch(setExpenseLogs(response))
-    );
+    await accountData().then((response) => dispatch(setAccount(response)));
 
     setExpenseDesc("");
     setExpenseValue("");
     setExpenseCategory("");
+    setExpenseName("");
   };
 
   return (
@@ -108,6 +112,13 @@ const FutureExpenses = () => {
               </Dropdown.Menu>
             </Dropdown>
             <Form.Control
+              placeholder='Nome'
+              aria-label='nome'
+              type='text'
+              value={expenseName}
+              onChange={({ target }) => setExpenseName(target.value)}
+            />
+            <Form.Control
               placeholder='Descrição'
               aria-label='descrição'
               type='text'
@@ -131,11 +142,11 @@ const FutureExpenses = () => {
             pagination
             responsive
             highlightOnHover
-            selectableRows
-            selectableRowsSingle
-            onSelectedRowsChange={handleRowSelected}
+            // selectableRows
+            // selectableRowsSingle
+            // onSelectedRowsChange={handleRowSelected}
             theme='dark'
-            progressPending={expenseLogs ? false : true}
+            progressPending={expenses ? false : true}
             columns={columns}
             data={data}
           />

@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { valuesManager, updateBill } from "../../services/axiosRequests";
-import { billManager } from "../../functions/billManager";
-import { setBillLogs } from "../../Redux/reducers/moneyManager";
+import { setAccount } from "../../Redux/reducers/moneyManager";
+import {
+  createBill,
+  accountData,
+  updateBill,
+} from "../../services/axiosRequests";
 
 import Form from "react-bootstrap/Form";
-import Dropdown from "react-bootstrap/Dropdown";
 import InputGroup from "react-bootstrap/InputGroup";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import DataTable from "react-data-table-component";
+import moment from "moment";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTable } from "@fortawesome/free-solid-svg-icons";
@@ -23,30 +26,28 @@ const Bills = () => {
   const [billTotalValue, setBillTotalValue] = useState("");
   const [billInstallment, setBillInstallment] = useState("");
 
-  const { billLogs } = useSelector((state) => state.moneyManager);
+  const {
+    account: { bills },
+  } = useSelector((state) => state.moneyManager);
   const dispatch = useDispatch();
 
   const interfaceUpdate = async () =>
-    await billManager().then((response) => dispatch(setBillLogs(response)));
+    await accountData().then((response) => dispatch(setAccount(response)));
 
-  const handleUpdate = async (name, selected, targetId) => {
-    const id = targetId.replace(/\D/g, "");
-    await updateBill(name, selected, id);
+  const handleUpdate = async (row) => {
+    const id = row.id.replace(/\D/g, "");
+    const { installmentValue } = row;
+    await updateBill(installmentValue, id);
 
     interfaceUpdate();
   };
 
   const handleSubmit = async () => {
-    await valuesManager(
-      {
-        name: billName,
-        value: 0,
-        totalValue: billTotalValue,
-        installment: billInstallment,
-        status: "Em andamento",
-      },
-      "bill"
-    );
+    await createBill({
+      nome: billName,
+      valorTotal: billTotalValue,
+      numeroParcelas: billInstallment,
+    });
 
     interfaceUpdate();
 
@@ -62,25 +63,13 @@ const Bills = () => {
         selector: (row) => row.name,
       },
       {
-        name: "Valor Pago",
-        selector: (row) => row.value,
-        sortable: true,
-        cell: (row) => (
-          <Form.Control
-            placeholder='Valor'
-            aria-label='valor'
-            type='number'
-            value={row.value}
-            id={row.id}
-            onChange={({ target }) =>
-              handleUpdate("value", target.value, target.id)
-            }
-          />
-        ),
-      },
-      {
         name: "Valor Total",
         selector: (row) => row.totalValue,
+        sortable: true,
+      },
+      {
+        name: "Valor Pago",
+        selector: (row) => row.totalPaid,
         sortable: true,
       },
       {
@@ -94,52 +83,36 @@ const Bills = () => {
         sortable: true,
       },
       {
-        name: "Status",
-        selector: (row) => row.status,
+        name: "Data Inicio",
+        selector: (row) => row.startDate,
         sortable: true,
-        cell: (row) => (
-          <Dropdown
-            onSelect={(selected, { target }) =>
-              handleUpdate("status", selected, target.id)
-            }
-          >
-            <Dropdown.Toggle
-              variant='warning'
-              id='dropdown-basic'
-              style={{ minWidth: "18.5vh" }}
-            >
-              {row.status}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item eventKey='Em andamento' id={row.id}>
-                Em andamento
-              </Dropdown.Item>
-              <Dropdown.Item eventKey='Concluido' id={row.id}>
-                Concluido
-              </Dropdown.Item>
-              <Dropdown.Item eventKey='Parado' id={row.id}>
-                Parado
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        ),
+      },
+      {
+        name: "Data Final",
+        selector: (row) => row.finalDate,
+        sortable: true,
+      },
+      {
+        selector: (row) => row.pay,
+        cell: (row) => <Button onClick={() => handleUpdate(row)}>Pagar</Button>,
       },
     ]);
 
-    if (billLogs) {
+    if (bills) {
       setData(
-        billLogs.map((log) => ({
-          id: log.name + "_" + log.id,
-          name: log.name,
-          value: log.value,
-          totalValue: log.totalValue,
-          installment: log.installment,
-          installmentValue: log.installmentValue,
-          status: log.status,
+        bills.map((log) => ({
+          id: log.nome + "_" + log.id,
+          name: log.nome,
+          totalValue: log.valorTotal,
+          totalPaid: parseFloat(log.valorPago.toFixed(2)),
+          installment: log.numeroParcelas,
+          installmentValue: parseFloat(log.valorParcelas.toFixed(2)),
+          startDate: moment(log.dataInicio).format("DD/MM/YYYY"),
+          finalDate: moment(log.dataFinal).format("DD/MM/YYYY"),
         }))
       );
     }
-  }, [billLogs]);
+  }, [bills]);
 
   return (
     <>
@@ -181,7 +154,6 @@ const Bills = () => {
             responsive
             highlightOnHover
             theme='dark'
-            progressPending={billLogs ? false : true}
             columns={columns}
             data={data}
           />

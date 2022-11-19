@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { valuesManager } from "../../services/axiosRequests";
-import { depositManager } from "../../functions/depositManager";
-import { setDepositLogs } from "../../Redux/reducers/moneyManager";
+import { setAccount } from "../../Redux/reducers/moneyManager";
+import { valuesManager, accountData } from "../../services/axiosRequests";
 
 import Form from "react-bootstrap/Form";
 import Dropdown from "react-bootstrap/Dropdown";
@@ -24,7 +23,9 @@ const Deposit = () => {
   const [depositDesc, setDepositDesc] = useState("");
   const [depositCategory, setDepositCategory] = useState("");
 
-  const { depositLogs } = useSelector((state) => state.moneyManager);
+  const {
+    account: { deposits },
+  } = useSelector((state) => state.moneyManager);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -49,32 +50,30 @@ const Deposit = () => {
       },
     ]);
 
-    if (depositLogs) {
+    if (deposits) {
       setData(
-        depositLogs.map((log) => ({
+        deposits.map((log) => ({
           id: Math.floor(Math.random() * 100) + log.id,
-          category: log.category,
-          description: log.description,
-          date: moment(log.createdAt).format("DD/MM/YYYY"),
-          value: log.value,
+          category: log.categoria,
+          description: log.descricao,
+          date: moment(log.data).format("DD/MM/YYYY"),
+          value: log.valor,
         }))
       );
     }
-  }, [depositLogs]);
+  }, [deposits]);
 
   const handleSubmit = async () => {
     await valuesManager(
       {
-        value: depositValue,
-        description: depositDesc,
-        category: depositCategory,
+        valor: depositValue,
+        descricao: depositDesc,
+        categoria: depositCategory,
       },
       "deposit"
     );
 
-    await depositManager().then((response) =>
-      dispatch(setDepositLogs(response))
-    );
+    await accountData().then((response) => dispatch(setAccount(response)));
 
     setDepositValue("");
     setDepositDesc("");
@@ -126,7 +125,7 @@ const Deposit = () => {
             responsive
             highlightOnHover
             theme='dark'
-            progressPending={depositLogs ? false : true}
+            progressPending={deposits ? false : true}
             columns={columns}
             data={data}
           />

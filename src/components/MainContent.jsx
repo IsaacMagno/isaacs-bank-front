@@ -14,7 +14,9 @@ const MainContent = () => {
   const [Component, setComponent] = useState(<Logs />);
   const [tableSelected, setTableSelected] = useState("logs");
 
-  const { balance } = useSelector((state) => state.moneyManager);
+  const {
+    account: { saldo },
+  } = useSelector((state) => state.moneyManager);
 
   useEffect(() => {
     if (tableSelected == "withdraw") setComponent(<Withdraw />);
@@ -38,10 +40,12 @@ const MainContent = () => {
               <li className='breadcrumb-item active text-white'>
                 <h5>
                   Saldo:{"  "}
-                  {balance.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {saldo
+                    ? saldo.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })
+                    : null}
                 </h5>
               </li>
             </ol>

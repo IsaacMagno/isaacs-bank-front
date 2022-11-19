@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { valuesManager } from "../../services/axiosRequests";
-import { withdrawManager } from "../../functions/withdrawManager";
-import { setWithdrawLogs } from "../../Redux/reducers/moneyManager";
+import { setAccount } from "../../Redux/reducers/moneyManager";
+import { valuesManager, accountData } from "../../services/axiosRequests";
 
 import Form from "react-bootstrap/Form";
 import Dropdown from "react-bootstrap/Dropdown";
@@ -24,7 +23,9 @@ const Withdraw = () => {
   const [withdrawDesc, setWithdrawDesc] = useState("");
   const [withdrawCategory, setWithdrawCategory] = useState("");
 
-  const { withdrawLogs } = useSelector((state) => state.moneyManager);
+  const {
+    account: { withdrawals },
+  } = useSelector((state) => state.moneyManager);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -49,32 +50,30 @@ const Withdraw = () => {
       },
     ]);
 
-    if (withdrawLogs) {
+    if (withdrawals) {
       setData(
-        withdrawLogs.map((log) => ({
+        withdrawals.map((log) => ({
           id: Math.floor(Math.random() * 100) + log.id,
-          category: log.category,
-          description: log.description,
-          date: moment(log.createdAt).format("DD/MM/YYYY"),
-          value: log.value,
+          category: log.categoria,
+          description: log.descricao,
+          date: moment(log.data).format("DD/MM/YYYY"),
+          value: log.valor,
         }))
       );
     }
-  }, [withdrawLogs]);
+  }, [withdrawals]);
 
   const handleSubmit = async () => {
     await valuesManager(
       {
-        value: withdrawValue,
-        description: withdrawDesc,
-        category: withdrawCategory,
+        valor: withdrawValue,
+        descricao: withdrawDesc,
+        categoria: withdrawCategory,
       },
       "withdraw"
     );
 
-    await withdrawManager().then((response) =>
-      dispatch(setWithdrawLogs(response))
-    );
+    await accountData().then((response) => dispatch(setAccount(response)));
     setWithdrawValue("");
     setWithdrawDesc("");
     setWithdrawCategory("");
@@ -125,7 +124,7 @@ const Withdraw = () => {
             responsive
             highlightOnHover
             theme='dark'
-            progressPending={withdrawLogs ? false : true}
+            progressPending={withdrawals ? false : true}
             columns={columns}
             data={data}
           />

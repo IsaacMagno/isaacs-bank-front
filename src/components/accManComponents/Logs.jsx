@@ -13,13 +13,15 @@ const Logs = () => {
   const [columns, setColumns] = useState();
   const [data, setData] = useState();
 
-  const { withdrawLogs, depositLogs } = useSelector(
-    (state) => state.moneyManager
-  );
+  const {
+    account: { deposits, withdrawals },
+  } = useSelector((state) => state.moneyManager);
 
   useEffect(() => {
-    setAllLogs([...withdrawLogs, ...depositLogs]);
-  }, [withdrawLogs, depositLogs]);
+    if (deposits || withdrawals) {
+      setAllLogs([...deposits, ...withdrawals]);
+    }
+  }, [deposits, withdrawals]);
 
   useEffect(() => {
     setColumns([
@@ -51,10 +53,10 @@ const Logs = () => {
       setData(
         allLogs.map((log) => ({
           id: Math.random() * log.id,
-          category: log.category,
-          description: log.description,
-          date: moment(log.createdAt).format("DD/MM/YYYY"),
-          value: log.value,
+          category: log.categoria,
+          description: log.descricao,
+          date: moment(log.data).format("DD/MM/YYYY"),
+          value: log.valor,
         }))
       );
     }
@@ -74,7 +76,7 @@ const Logs = () => {
             highlightOnHover
             defaultSortFieldId='valueId'
             theme='dark'
-            progressPending={depositLogs ? false : true}
+            progressPending={deposits ? false : true}
             columns={columns}
             data={data}
           />
